@@ -538,76 +538,77 @@ export default function AdmissionForm() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    try {
-      if (!formData.regdNo) {
-        alert("❌ Registration No. is required.");
-        return;
-      }
-      if (!formData.phone1) {
-        alert("❌ Primary Phone (Phone 1) is required.");
-        return;
-      }
-
-      // 🔍 Check for duplicate Regd No.
-      const regdQuery = query(
-        collection(db, "students"),
-        where("regdNo", "==", formData.regdNo)
-      );
-      const regdSnap = await getDocs(regdQuery);
-      if (!regdSnap.empty) {
-        alert("❌ This Registration Number already exists!");
-        return;
-      }
-
-      // 🔍 Check for duplicate Phone 1
-      const phoneQuery = query(
-        collection(db, "students"),
-        where("phone1", "==", formData.phone1)
-      );
-      const phoneSnap = await getDocs(phoneQuery);
-      if (!phoneSnap.empty) {
-        alert("❌ This Primary Phone number already exists!");
-        return;
-      }
-
-      // ✅ Add new student
-      await addDoc(collection(db, "students"), formData);
-
-      alert("✅ Student added successfully!");
-      setFormData({
-        regdNo: "",
-        studentName: "",
-        fatherName: "",
-        presentAddress: "",
-        aadharNo: "",
-        gender: "",
-        dob: "",
-        email: "",
-        phone1: "",
-        phone2: "",
-        qualification: "",
-        college: "",
-        degree: "",
-        branch: "",
-        yearOfPassing: "",
-        workExperience: "",
-        skillSet: "",
-        courseTitle: "",
-        company: "",
-        dateOfJoining: "",
-        timings: "",
-        totalFee: "",
-        installment1: "",
-        installment2: "",
-        due: "",
-      });
-    } catch (error) {
-      console.error("Error adding student: ", error);
-      alert("❌ Error saving student.");
+  try {
+    if (!formData.regdNo) {
+      alert("❌ Registration No. is required.");
+      return;
     }
-  };
+    if (!formData.phone1) {
+      alert("❌ Primary Phone (Phone 1) is required.");
+      return;
+    }
+    if (!formData.studentName || !formData.email) {
+      alert("❌ Student Name and Email are required.");
+      return;
+    }
+
+    // 👇 Map AdmissionForm fields to what API expects
+    const payload = {
+      name: formData.studentName,
+      email: formData.email,
+      phone: formData.phone1,
+      classId: formData.courseTitle || "general", // fallback if no course chosen
+    };
+
+    const res = await fetch("/api/create-student", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Failed to add student");
+
+    alert("✅ Student added successfully! Default Password: Vawe@2025");
+
+    // Reset form
+    setFormData({
+      regdNo: "",
+      studentName: "",
+      fatherName: "",
+      presentAddress: "",
+      aadharNo: "",
+      gender: "",
+      dob: "",
+      email: "",
+      phone1: "",
+      phone2: "",
+      qualification: "",
+      college: "",
+      degree: "",
+      branch: "",
+      yearOfPassing: "",
+      workExperience: "",
+      skillSet: "",
+      courseTitle: "",
+      company: "",
+      dateOfJoining: "",
+      timings: "",
+      totalFee: "",
+      installment1: "",
+      installment2: "",
+      due: "",
+    });
+
+  } catch (error) {
+    console.error("Error adding student: ", error);
+    alert("❌ Error saving student. " + error.message);
+  }
+};
+
+
 
   return (
     <CheckAdminAuth>
@@ -915,3 +916,7 @@ export default function AdmissionForm() {
     </CheckAdminAuth>
   );
 }
+
+
+
+
